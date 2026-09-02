@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, Award, Scale, Plus, Dumbbell } from 'lucide-react';
+import { Award, Scale, Plus } from 'lucide-react';
 import { WorkoutSession } from '../types';
 import { fetchSessions } from '../services/api';
+import { StrengthChart } from '../components/progress/StrengthChart';
+import { VolumeDistribution } from '../components/progress/VolumeDistribution';
 
 interface BodyweightLog {
   date: string;
@@ -42,11 +44,6 @@ export const ProgressPage: React.FC = () => {
     setInputWeight('');
   };
 
-  // Compute real metrics from completed sessions
-  const totalWorkouts = sessions.length;
-  const totalSets = sessions.reduce((acc, s) => acc + (s.totalSets || 0), 0);
-  const totalVolumeKg = sessions.reduce((acc, s) => acc + (s.totalVolumeKg || 0), 0);
-
   // Compute 7-day bodyweight average
   const currentWeight = bodyweightLogs[0]?.weightKg || null;
   const avgWeight = bodyweightLogs.length > 0
@@ -79,8 +76,14 @@ export const ProgressPage: React.FC = () => {
     <div className="space-y-5">
       <div className="px-1">
         <h2 className="text-xl font-black text-white">Progress Analytics</h2>
-        <p className="text-xs text-zinc-400">Track key strength PRs, training volume, and bodyweight trends</p>
+        <p className="text-xs text-zinc-400">Track lift trajectories, muscle volume, and bodyweight trends</p>
       </div>
+
+      {/* SVG Lift Trajectory Strength Line Chart */}
+      <StrengthChart sessions={sessions} />
+
+      {/* Muscle Group Set Volume Distribution */}
+      <VolumeDistribution sessions={sessions} />
 
       {/* Bodyweight Tracker Box */}
       <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3">
@@ -159,31 +162,6 @@ export const ProgressPage: React.FC = () => {
             No logged PRs yet. Complete sets during a workout to build your strength records!
           </div>
         )}
-      </div>
-
-      {/* Training Volume Summary */}
-      <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2">
-        <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-          <TrendingUp className="w-4 h-4 text-blue-400" />
-          Training Summary
-        </h3>
-
-        <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
-          <div className="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800/50">
-            <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Workouts</span>
-            <span className="text-lg font-bold font-mono text-white">{totalWorkouts}</span>
-          </div>
-          <div className="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800/50">
-            <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Total Sets</span>
-            <span className="text-lg font-bold font-mono text-white">{totalSets}</span>
-          </div>
-          <div className="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800/50">
-            <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Volume</span>
-            <span className="text-lg font-bold font-mono text-blue-400">
-              {totalVolumeKg.toLocaleString()} kg
-            </span>
-          </div>
-        </div>
       </div>
     </div>
   );

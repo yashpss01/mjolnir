@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Plus, Filter, Dumbbell } from 'lucide-react';
+import { Search, Plus, Dumbbell, ChevronRight } from 'lucide-react';
 import { Exercise, MuscleGroup } from '../types';
 import { fetchExercises, createCustomExercise } from '../services/api';
+import { ExerciseDetailModal } from '../components/exercises/ExerciseDetailModal';
 
 export const ExercisesPage: React.FC = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -9,6 +10,9 @@ export const ExercisesPage: React.FC = () => {
   const [selectedMuscle, setSelectedMuscle] = useState<string>('All');
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // Exercise Inspection Detail Modal
+  const [inspectExercise, setInspectExercise] = useState<Exercise | null>(null);
 
   // New exercise form state
   const [newName, setNewName] = useState('');
@@ -55,7 +59,7 @@ export const ExercisesPage: React.FC = () => {
       <div className="flex items-center justify-between px-1">
         <div>
           <h2 className="text-xl font-black text-white">Exercise Library</h2>
-          <p className="text-xs text-zinc-400">Search movement database or add custom movements</p>
+          <p className="text-xs text-zinc-400">Tap any movement to view PRs and performance history</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -109,7 +113,8 @@ export const ExercisesPage: React.FC = () => {
           {exercises.map((ex) => (
             <div
               key={ex.id}
-              className="p-3.5 bg-zinc-900/80 rounded-xl border border-zinc-800/80 flex items-center justify-between hover:border-zinc-700 transition"
+              onClick={() => setInspectExercise(ex)}
+              className="p-3.5 bg-zinc-900/80 rounded-xl border border-zinc-800/80 flex items-center justify-between hover:border-zinc-700 transition cursor-pointer"
             >
               <div>
                 <div className="flex items-center gap-2">
@@ -132,7 +137,7 @@ export const ExercisesPage: React.FC = () => {
                   )}
                 </div>
               </div>
-              <Dumbbell className="w-4 h-4 text-zinc-600" />
+              <ChevronRight className="w-4 h-4 text-zinc-500" />
             </div>
           ))}
           {exercises.length === 0 && (
@@ -205,6 +210,14 @@ export const ExercisesPage: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Movement Detail Inspection Modal */}
+      {inspectExercise && (
+        <ExerciseDetailModal
+          exercise={inspectExercise}
+          onClose={() => setInspectExercise(null)}
+        />
       )}
     </div>
   );
