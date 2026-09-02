@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-server/
+
+# SQLite Database & Data
+server/data/*.db
+server/data/*.db-wal
+server/data/*.db-shm
+
+# Environment & Logs
+.env
+*.log
+.DS_Store
