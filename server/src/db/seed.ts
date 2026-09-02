@@ -13,7 +13,7 @@ export function seedDatabase() {
 
   // Seed Exercises
   const insertExercise = db.prepare(`
-    INSERT INTO exercises (id, name, muscle_group, secondary_muscles, equipment, instructions, default_rep_min, default_rep_max)
+    INSERT OR IGNORE INTO exercises (id, name, muscle_group, secondary_muscles, equipment, instructions, default_rep_min, default_rep_max)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -64,27 +64,14 @@ export function seedDatabase() {
     { id: 'ex-cable-crunch', name: 'Cable Crunch', muscleGroup: 'Core', secondary: 'Abs', equipment: 'Cable', repMin: 12, repMax: 15 },
   ];
 
-  for (const ex of exercisesData) {
-    insertExercise.run(
-      ex.id,
-      ex.name,
-      ex.muscleGroup,
-      ex.secondary,
-      ex.equipment,
-      `Focus on controlled movement and full range of motion.`,
-      ex.repMin,
-      ex.repMax
-    );
-  }
-
   // Seed 5 Workout Templates
   const insertTemplate = db.prepare(`
-    INSERT INTO workout_templates (id, name, target_day, notes)
+    INSERT OR IGNORE INTO workout_templates (id, name, target_day, notes)
     VALUES (?, ?, ?, ?)
   `);
 
   const insertTemplateExercise = db.prepare(`
-    INSERT INTO workout_template_exercises (id, template_id, exercise_id, order_index, target_sets, target_rep_min, target_rep_max, rest_seconds, notes)
+    INSERT OR IGNORE INTO workout_template_exercises (id, template_id, exercise_id, order_index, target_sets, target_rep_min, target_rep_max, rest_seconds, notes)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
