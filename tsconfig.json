@@ -15,7 +15,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitReturns": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
