@@ -165,22 +165,37 @@ export function seedDatabase() {
     }
   ];
 
-  for (const tpl of templates) {
-    insertTemplate.run(tpl.id, tpl.name, tpl.targetDay, tpl.notes);
-    tpl.exercises.forEach((item, idx) => {
-      insertTemplateExercise.run(
-        `tplex-${tpl.id}-${idx}`,
-        tpl.id,
-        item.exId,
-        idx + 1,
-        item.sets,
-        item.minReps,
-        item.maxReps,
-        item.rest,
-        null
+  db.transaction(() => {
+    for (const ex of exercisesData) {
+      insertExercise.run(
+        ex.id,
+        ex.name,
+        ex.muscleGroup,
+        ex.secondary,
+        ex.equipment,
+        `Focus on controlled movement and full range of motion.`,
+        ex.repMin,
+        ex.repMax
       );
-    });
-  }
+    }
+
+    for (const tpl of templates) {
+      insertTemplate.run(tpl.id, tpl.name, tpl.targetDay, tpl.notes);
+      tpl.exercises.forEach((item, idx) => {
+        insertTemplateExercise.run(
+          `tplex-${tpl.id}-${idx}`,
+          tpl.id,
+          item.exId,
+          idx + 1,
+          item.sets,
+          item.minReps,
+          item.maxReps,
+          item.rest,
+          null
+        );
+      });
+    }
+  })();
 
   console.log('Seeding completed successfully!');
 }

@@ -23,6 +23,9 @@ app.use(express.json());
 initDatabase();
 seedDatabase();
 
+// Health check endpoints for Render
+app.get('/healthz', (req, res) => res.status(200).send('OK'));
+
 // API Routes
 app.use('/api', healthRoutes);
 app.use('/api/exercises', exerciseRoutes);
