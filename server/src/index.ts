@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initDatabase } from './db/index.js';
 import { seedDatabase } from './db/seed.js';
@@ -28,15 +29,28 @@ app.use('/api/exercises', exerciseRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/sessions', sessionRoutes);
 
-// In Production, serve Vite build static assets & fallback index.html
-const clientDistPath = path.resolve(__dirname, '../../dist');
+// Dynamically resolve client dist folder (production build)
+let clientDistPath = path.resolve(process.cwd(), 'dist');
+if (!fs.existsSync(clientDistPath)) {
+  clientDistPath = path.resolve(__dirname, '../dist');
+}
+if (!fs.existsSync(clientDistPath)) {
+  clientDistPath = path.resolve(__dirname, '../../dist');
+}
+
+console.log(`Serving static client files from: ${clientDistPath}`);
 app.use(express.static(clientDistPath));
 
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) {
     return next();
   }
-  res.sendFile(path.join(clientDistPath, 'index.html'));
+  const indexPath = path.join(clientDistPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Mjolnir Client Build (index.html) not found');
+  }
 });
 
 app.listen(PORT, () => {
