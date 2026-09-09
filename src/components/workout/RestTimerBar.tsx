@@ -35,8 +35,8 @@ export const RestTimerBar: React.FC<RestTimerBarProps> = ({
   const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
   return (
-    <div className="fixed bottom-16 left-0 right-0 z-40 px-3">
-      <div className="max-w-md mx-auto bg-zinc-900 border border-zinc-700/80 shadow-2xl rounded-2xl p-3 flex items-center justify-between text-zinc-100 backdrop-blur-lg">
+    <div className="fixed bottom-20 left-0 right-0 z-40 px-3 mb-safe">
+      <div className="max-w-md mx-auto bg-zinc-900/95 border border-zinc-700/90 shadow-2xl rounded-2xl p-3 flex items-center justify-between text-zinc-100 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase font-bold tracking-wider text-blue-400">Rest Timer</span>
@@ -45,7 +45,7 @@ export const RestTimerBar: React.FC<RestTimerBarProps> = ({
             </span>
           </div>
           {exerciseName && (
-            <span className="text-xs text-zinc-400 truncate max-w-[110px] hidden sm:inline">
+            <span className="text-xs text-zinc-400 truncate max-w-[90px] hidden xs:inline">
               {exerciseName}
             </span>
           )}

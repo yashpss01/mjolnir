@@ -381,12 +381,12 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
               {/* Set Logging Table Grid */}
               <div className="space-y-1.5 pt-1">
                 {/* Table Header */}
-                <div className="grid grid-cols-12 gap-1 text-[11px] font-bold text-zinc-500 uppercase tracking-wider text-center px-1">
-                  <span className="col-span-2 text-left">Set</span>
-                  <span className="col-span-3">Previous</span>
-                  <span className="col-span-3">Kg</span>
-                  <span className="col-span-3">Reps</span>
-                  <span className="col-span-1">✓</span>
+                <div className="grid grid-cols-12 gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wider text-center px-1">
+                  <span className="col-span-1 text-center">Set</span>
+                  <span className="col-span-3 text-center">Previous</span>
+                  <span className="col-span-3 text-center">Kg</span>
+                  <span className="col-span-3 text-center">Reps</span>
+                  <span className="col-span-2 text-center">✓</span>
                 </div>
 
                 {/* Table Rows */}
@@ -396,19 +396,19 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
                   return (
                     <div
                       key={set.id}
-                      className={`grid grid-cols-12 gap-1.5 items-center p-1.5 rounded-xl border transition-all ${
+                      className={`grid grid-cols-12 gap-1 items-center p-1.5 rounded-xl border transition-all ${
                         isDone
                           ? 'bg-emerald-950/30 border-emerald-800/50 text-emerald-300'
                           : 'bg-zinc-950 border-zinc-800/80 text-zinc-200'
                       }`}
                     >
                       {/* Set Number */}
-                      <span className="col-span-2 font-mono font-bold text-xs pl-1">
+                      <span className="col-span-1 font-mono font-bold text-xs text-center">
                         {set.setNumber}
                       </span>
 
                       {/* Previous Performance */}
-                      <span className="col-span-3 text-[11px] font-mono text-zinc-400 text-center truncate">
+                      <span className="col-span-3 text-[10px] font-mono text-zinc-400 text-center truncate">
                         {set.previousPerformance}
                       </span>
 
@@ -420,7 +420,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
                           value={set.weightKg === 0 ? '' : set.weightKg}
                           onChange={(e) => handleSetChange(exIdx, setIdx, 'weightKg', parseFloat(e.target.value) || 0)}
                           placeholder="0"
-                          className="w-full py-1.5 px-2 bg-zinc-900 border border-zinc-700/80 rounded-lg font-mono text-sm text-center text-white focus:outline-none focus:border-blue-500"
+                          className="w-full py-1.5 px-1 bg-zinc-900 border border-zinc-700/80 rounded-lg font-mono text-sm text-center text-white focus:outline-none focus:border-blue-500"
                         />
                       </div>
 
@@ -431,12 +431,12 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
                           value={set.reps === 0 ? '' : set.reps}
                           onChange={(e) => handleSetChange(exIdx, setIdx, 'reps', parseInt(e.target.value, 10) || 0)}
                           placeholder="0"
-                          className="w-full py-1.5 px-2 bg-zinc-900 border border-zinc-700/80 rounded-lg font-mono text-sm text-center text-white focus:outline-none focus:border-blue-500"
+                          className="w-full py-1.5 px-1 bg-zinc-900 border border-zinc-700/80 rounded-lg font-mono text-sm text-center text-white focus:outline-none focus:border-blue-500"
                         />
                       </div>
 
                       {/* Large Checkmark Touch Target */}
-                      <div className="col-span-1 flex justify-center">
+                      <div className="col-span-2 flex justify-center">
                         <button
                           onClick={() => handleToggleComplete(exIdx, setIdx)}
                           className={`w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-90 ${
