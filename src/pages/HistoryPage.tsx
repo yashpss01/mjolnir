@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Clock, Dumbbell, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, Trophy, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { WorkoutSession } from '../types';
-import { fetchSessions } from '../services/api';
+import { fetchSessions, deleteSession } from '../services/api';
 
 export const HistoryPage: React.FC = () => {
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
@@ -19,6 +19,19 @@ export const HistoryPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string, name: string) => {
+    e.stopPropagation();
+    if (!window.confirm(`Are you sure you want to delete "${name}" from your history?`)) return;
+
+    try {
+      await deleteSession(sessionId);
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete workout log.');
+    }
+  };
 
   const formatTime = (secs: number) => {
     const hrs = Math.floor(secs / 3600);
@@ -64,12 +77,21 @@ export const HistoryPage: React.FC = () => {
                     <Calendar className="w-3.5 h-3.5 text-blue-400" />
                     {formatDate(item.startTime)}
                   </span>
-                  {item.prCount > 0 && (
-                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Trophy className="w-3 h-3" />
-                      {item.prCount} PR{item.prCount > 1 ? 's' : ''}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {item.prCount > 0 && (
+                      <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Trophy className="w-3 h-3" />
+                        {item.prCount} PR{item.prCount > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <button
+                      onClick={(e) => handleDeleteSession(e, item.id, item.name)}
+                      title="Delete workout log"
+                      className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between">

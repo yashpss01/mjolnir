@@ -325,4 +325,24 @@ router.post('/', async (req, res) => {
   }
 });
 
+// DELETE /api/sessions/:id — Delete completed workout session log
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (isSupabaseConfigured && supabase) {
+      const sb = supabase;
+      const { error } = await sb.from('workout_sessions').delete().eq('id', id);
+      if (error) throw error;
+      return res.json({ success: true, id });
+    }
+
+    // SQLite Fallback
+    db.prepare('DELETE FROM workout_sessions WHERE id = ?').run(id);
+    res.json({ success: true, id });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Plus, Trash2, Dumbbell, Save } from 'lucide-react';
 import { WorkoutTemplate, Exercise } from '../../types';
-import { fetchExercises, saveTemplate } from '../../services/api';
+import { fetchExercises, saveTemplate, deleteTemplate } from '../../services/api';
 
 interface TemplateEditorModalProps {
   template?: WorkoutTemplate | null; // null if creating new
@@ -230,11 +230,29 @@ export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 flex items-center gap-2">
+            {template?.id && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!window.confirm(`Are you sure you want to delete routine "${name}"?`)) return;
+                  try {
+                    await deleteTemplate(template.id);
+                    onSaved();
+                  } catch (err) {
+                    alert('Failed to delete workout template');
+                  }
+                }}
+                className="py-3 px-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 font-bold text-sm rounded-xl flex items-center justify-center gap-1.5 transition"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            )}
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2"
+              className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Saving...' : 'Save Template'}

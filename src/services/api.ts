@@ -125,6 +125,14 @@ export async function fetchSessions(): Promise<WorkoutSession[]> {
   }
 }
 
+export async function deleteTemplate(templateId: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/templates/${templateId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to delete workout template');
+  return res.json();
+}
+
 export async function saveSession(sessionData: any): Promise<{ id: string }> {
   // Always save local backup first for guaranteed zero data loss
   saveLocalSession(sessionData);
@@ -135,5 +143,18 @@ export async function saveSession(sessionData: any): Promise<{ id: string }> {
     body: JSON.stringify(sessionData),
   });
   if (!res.ok) throw new Error('Failed to save workout session');
+  return res.json();
+}
+
+export async function deleteSession(sessionId: string): Promise<any> {
+  // Remove from localStorage backup
+  const existing = getLocalSessions();
+  const updated = existing.filter((s: any) => s.id !== sessionId);
+  localStorage.setItem('mjolnir_sessions_backup', JSON.stringify(updated));
+
+  const res = await fetch(`${API_BASE}/sessions/${sessionId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to delete workout session');
   return res.json();
 }
