@@ -1,11 +1,53 @@
 import { Router } from 'express';
 import { db } from '../db/index.js';
+import { supabase, isSupabaseConfigured } from '../db/supabase.js';
 
 const router = Router();
 
 // GET /api/templates
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
+    if (isSupabaseConfigured && supabase) {
+      const sb = supabase;
+      const { data: templates, error: tplErr } = await sb.from('workout_templates').select('*');
+      if (tplErr) throw tplErr;
+
+      const result = await Promise.all((templates || []).map(async (tpl) => {
+        const { data: tplExercises } = await sb
+          .from('workout_template_exercises')
+          .select('*, exercises(name, muscle_group, equipment)')
+          .eq('template_id', tpl.id)
+          .order('order_index', { ascending: true });
+
+        return {
+          id: tpl.id,
+          name: tpl.name,
+          targetDay: tpl.target_day,
+          notes: tpl.notes,
+          exercises: (tplExercises || []).map((item: any) => ({
+            id: item.id,
+            templateId: item.template_id,
+            exerciseId: item.exercise_id,
+            orderIndex: item.order_index,
+            targetSets: item.target_sets,
+            targetRepMin: item.target_rep_min,
+            targetRepMax: item.target_rep_max,
+            restSeconds: item.rest_seconds,
+            notes: item.notes,
+            exercise: {
+              id: item.exercise_id,
+              name: item.exercises?.name || 'Exercise',
+              muscleGroup: item.exercises?.muscle_group || 'Chest',
+              equipment: item.exercises?.equipment || 'Barbell',
+            },
+          })),
+        };
+      }));
+
+      return res.json(result);
+    }
+
+    // SQLite Fallback
     const templates = db.prepare(`
       SELECT * FROM workout_templates 
       ORDER BY CASE target_day 
@@ -60,8 +102,8 @@ router.get('/', (req, res) => {
   }
 });
 
-// POST /api/templates — Create new template
-router.post('/', (req, res) => {
+// POST /api/templates
+router.post('/', async (req, res) => {
   try {
     const { name, targetDay, notes, exercises } = req.body;
     if (!name || !targetDay) {
@@ -69,11 +111,39 @@ router.post('/', (req, res) => {
     }
 
     const templateId = `tpl-custom-${Date.now()}`;
+
+    if (isSupabaseConfigured && supabase) {
+      const sb = supabase;
+      await sb.from('workout_templates').insert({
+        id: templateId,
+        name,
+        target_day: targetDay,
+        notes: notes || '',
+      });
+
+      if (Array.isArray(exercises)) {
+        const rows = exercises.map((item: any, idx: number) => ({
+          id: `tplex-${templateId}-${idx}`,
+          template_id: templateId,
+          exercise_id: item.exerciseId,
+          order_index: idx + 1,
+          target_sets: item.targetSets || 3,
+          target_rep_min: item.targetRepMin || 6,
+          target_rep_max: item.targetRepMax || 10,
+          rest_seconds: item.restSeconds || 90,
+          notes: item.notes || null,
+        }));
+        await sb.from('workout_template_exercises').insert(rows);
+      }
+
+      return res.status(201).json({ id: templateId, success: true });
+    }
+
+    // SQLite Fallback
     const insertTemplate = db.prepare(`
       INSERT INTO workout_templates (id, name, target_day, notes)
       VALUES (?, ?, ?, ?)
     `);
-
     const insertTemplateExercise = db.prepare(`
       INSERT INTO workout_template_exercises (id, template_id, exercise_id, order_index, target_sets, target_rep_min, target_rep_max, rest_seconds, notes)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -99,48 +169,6 @@ router.post('/', (req, res) => {
     })();
 
     res.status(201).json({ id: templateId, success: true });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// PUT /api/templates/:id — Edit existing template
-router.put('/:id', (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, targetDay, notes, exercises } = req.body;
-
-    db.transaction(() => {
-      db.prepare(`
-        UPDATE workout_templates SET name = ?, target_day = ?, notes = ? WHERE id = ?
-      `).run(name, targetDay, notes || '', id);
-
-      // Refresh template exercises
-      db.prepare(`DELETE FROM workout_template_exercises WHERE template_id = ?`).run(id);
-
-      if (Array.isArray(exercises)) {
-        const insertTemplateExercise = db.prepare(`
-          INSERT INTO workout_template_exercises (id, template_id, exercise_id, order_index, target_sets, target_rep_min, target_rep_max, rest_seconds, notes)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        exercises.forEach((item: any, idx: number) => {
-          insertTemplateExercise.run(
-            `tplex-${id}-${idx}-${Date.now()}`,
-            id,
-            item.exerciseId,
-            idx + 1,
-            item.targetSets || 3,
-            item.targetRepMin || 6,
-            item.targetRepMax || 10,
-            item.restSeconds || 90,
-            item.notes || null
-          );
-        });
-      }
-    })();
-
-    res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

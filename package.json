@@ -12,9 +12,11 @@
     "build:client": "vite build",
     "build:server": "tsc -p server/tsconfig.json",
     "start": "node dist-server/index.js",
-    "db:seed": "tsx server/src/db/seed.ts"
+    "db:seed": "tsx server/src/db/seed.ts",
+    "db:seed-supabase": "tsx server/src/db/seed_supabase.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
     "@types/better-sqlite3": "^7.6.12",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",

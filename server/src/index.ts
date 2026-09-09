@@ -5,6 +5,8 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initDatabase } from './db/index.js';
 import { seedDatabase } from './db/seed.js';
+import { isSupabaseConfigured } from './db/supabase.js';
+import { seedSupabaseDatabase } from './db/seed_supabase.js';
 import healthRoutes from './routes/health.js';
 import exerciseRoutes from './routes/exercises.js';
 import templateRoutes from './routes/templates.js';
@@ -22,6 +24,9 @@ app.use(express.json());
 // Initialize DB and Seed default data on startup
 initDatabase();
 seedDatabase();
+if (isSupabaseConfigured) {
+  seedSupabaseDatabase().catch(console.error);
+}
 
 // Health check endpoints for Render
 app.get('/healthz', (req, res) => res.status(200).send('OK'));

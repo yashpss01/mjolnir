@@ -1,11 +1,80 @@
 import { Router } from 'express';
 import { db } from '../db/index.js';
+import { supabase, isSupabaseConfigured } from '../db/supabase.js';
 
 const router = Router();
 
 // GET /api/sessions — Fetch workout history
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
+    if (isSupabaseConfigured && supabase) {
+      const sb = supabase;
+      const { data: sessions, error: sessErr } = await sb
+        .from('workout_sessions')
+        .select('*')
+        .order('start_time', { ascending: false });
+
+      if (sessErr) throw sessErr;
+
+      const result = await Promise.all((sessions || []).map(async (sess) => {
+        const { data: sessionExercises } = await sb
+          .from('workout_session_exercises')
+          .select('*, exercises(name, muscle_group, equipment)')
+          .eq('session_id', sess.id)
+          .order('order_index', { ascending: true });
+
+        const exercisesWithSets = await Promise.all((sessionExercises || []).map(async (se: any) => {
+          const { data: sets } = await sb
+            .from('exercise_sets')
+            .select('*')
+            .eq('session_exercise_id', se.id)
+            .order('set_number', { ascending: true });
+
+          return {
+            id: se.id,
+            sessionId: se.session_id,
+            exerciseId: se.exercise_id,
+            orderIndex: se.order_index,
+            notes: se.notes,
+            exercise: {
+              id: se.exercise_id,
+              name: se.exercises?.name || 'Exercise',
+              muscleGroup: se.exercises?.muscle_group || 'Chest',
+              equipment: se.exercises?.equipment || 'Barbell',
+            },
+            sets: (sets || []).map((s: any) => ({
+              id: s.id,
+              sessionExerciseId: s.session_exercise_id,
+              setNumber: s.set_number,
+              weightKg: s.weight_kg,
+              reps: s.reps,
+              isCompleted: Boolean(s.is_completed),
+              rpe: s.rpe,
+              restSecondsTaken: s.rest_seconds_taken,
+            })),
+          };
+        }));
+
+        return {
+          id: sess.id,
+          templateId: sess.template_id,
+          name: sess.name,
+          startTime: sess.start_time,
+          endTime: sess.end_time,
+          durationSeconds: sess.duration_seconds,
+          totalVolumeKg: sess.total_volume_kg,
+          totalSets: sess.total_sets,
+          prCount: sess.pr_count,
+          status: sess.status,
+          notes: sess.notes,
+          exercises: exercisesWithSets,
+        };
+      }));
+
+      return res.json(result);
+    }
+
+    // SQLite Fallback
     const sessions = db.prepare(`
       SELECT * FROM workout_sessions 
       WHERE status = 'completed'
@@ -75,12 +144,41 @@ router.get('/', (req, res) => {
   }
 });
 
-// GET /api/sessions/previous/:exerciseId — Fetch previous performance for an exercise
-router.get('/previous/:exerciseId', (req, res) => {
+// GET /api/sessions/previous/:exerciseId
+router.get('/previous/:exerciseId', async (req, res) => {
   try {
     const { exerciseId } = req.params;
 
-    // Find last completed session containing this exercise
+    if (isSupabaseConfigured && supabase) {
+      const sb = supabase;
+      const { data: lastSe } = await sb
+        .from('workout_session_exercises')
+        .select('id, workout_sessions(start_time)')
+        .eq('exercise_id', exerciseId)
+        .order('id', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!lastSe) return res.json({ sets: [] });
+
+      const { data: sets } = await sb
+        .from('exercise_sets')
+        .select('set_number, weight_kg, reps')
+        .eq('session_exercise_id', lastSe.id)
+        .eq('is_completed', true)
+        .order('set_number', { ascending: true });
+
+      return res.json({
+        date: (lastSe as any).workout_sessions?.start_time,
+        sets: (sets || []).map((s: any) => ({
+          setNumber: s.set_number,
+          weightKg: s.weight_kg,
+          reps: s.reps,
+        })),
+      });
+    }
+
+    // SQLite Fallback
     const lastSessionExercise = db.prepare(`
       SELECT wse.id, ws.start_time
       FROM workout_session_exercises wse
@@ -115,7 +213,7 @@ router.get('/previous/:exerciseId', (req, res) => {
 });
 
 // POST /api/sessions — Complete and save workout session
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { templateId, name, startTime, endTime, durationSeconds, totalVolumeKg, totalSets, prCount, notes, exercises } = req.body;
 
@@ -124,6 +222,53 @@ router.post('/', (req, res) => {
     }
 
     const sessionId = `sess-${Date.now()}`;
+
+    if (isSupabaseConfigured && supabase) {
+      const sb = supabase;
+      await sb.from('workout_sessions').insert({
+        id: sessionId,
+        template_id: templateId || null,
+        name,
+        start_time: startTime || new Date().toISOString(),
+        end_time: endTime || new Date().toISOString(),
+        duration_seconds: durationSeconds || 0,
+        total_volume_kg: totalVolumeKg || 0,
+        total_sets: totalSets || 0,
+        pr_count: prCount || 0,
+        status: 'completed',
+        notes: notes || '',
+      });
+
+      for (let exIdx = 0; exIdx < exercises.length; exIdx++) {
+        const exItem = exercises[exIdx];
+        const seId = `se-${sessionId}-${exIdx}`;
+        await sb.from('workout_session_exercises').insert({
+          id: seId,
+          session_id: sessionId,
+          exercise_id: exItem.exerciseId,
+          order_index: exIdx + 1,
+          notes: exItem.notes || '',
+        });
+
+        if (Array.isArray(exItem.sets)) {
+          const setRows = exItem.sets.map((setItem: any, setIdx: number) => ({
+            id: `set-${seId}-${setIdx}`,
+            session_exercise_id: seId,
+            set_number: setIdx + 1,
+            weight_kg: setItem.weightKg || 0,
+            reps: setItem.reps || 0,
+            is_completed: Boolean(setItem.isCompleted),
+            rpe: setItem.rpe || null,
+            rest_seconds_taken: setItem.restSecondsTaken || null,
+          }));
+          await sb.from('exercise_sets').insert(setRows);
+        }
+      }
+
+      return res.status(201).json({ id: sessionId, success: true });
+    }
+
+    // SQLite Fallback
     const insertSession = db.prepare(`
       INSERT INTO workout_sessions (id, template_id, name, start_time, end_time, duration_seconds, total_volume_kg, total_sets, pr_count, status, notes)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?)
@@ -169,26 +314,6 @@ router.post('/', (req, res) => {
               setItem.rpe || null,
               setItem.restSecondsTaken || null
             );
-
-            // PR Check: Track heaviest weight for exercise
-            if (setItem.isCompleted && setItem.weightKg > 0) {
-              const currentMaxPr = db.prepare(`
-                SELECT value FROM personal_records WHERE exercise_id = ? AND record_type = 'max_weight'
-              `).get(exItem.exerciseId) as any;
-
-              if (!currentMaxPr || setItem.weightKg > currentMaxPr.value) {
-                const prId = `pr-${Date.now()}-${exItem.exerciseId}`;
-                if (currentMaxPr) {
-                  db.prepare(`
-                    UPDATE personal_records SET previous_value = value, value = ?, achieved_at = CURRENT_TIMESTAMP WHERE exercise_id = ? AND record_type = 'max_weight'
-                  `).run(setItem.weightKg, exItem.exerciseId);
-                } else {
-                  db.prepare(`
-                    INSERT INTO personal_records (id, exercise_id, record_type, value, achieved_at) VALUES (?, ?, 'max_weight', ?, CURRENT_TIMESTAMP)
-                  `).run(prId, exItem.exerciseId, setItem.weightKg);
-                }
-              }
-            }
           });
         }
       });
