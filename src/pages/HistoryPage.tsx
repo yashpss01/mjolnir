@@ -20,12 +20,12 @@ export const HistoryPage: React.FC = () => {
     loadData();
   }, []);
 
-  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string, name: string) => {
+  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string, startTime: string, name: string) => {
     e.stopPropagation();
     if (!window.confirm(`Are you sure you want to delete "${name}" from your history?`)) return;
 
     try {
-      await deleteSession(sessionId);
+      await deleteSession(sessionId, startTime);
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
     } catch (err) {
       console.error(err);
@@ -85,7 +85,7 @@ export const HistoryPage: React.FC = () => {
                       </span>
                     )}
                     <button
-                      onClick={(e) => handleDeleteSession(e, item.id, item.name)}
+                      onClick={(e) => handleDeleteSession(e, item.id, item.startTime, item.name)}
                       title="Delete workout log"
                       className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
                     >

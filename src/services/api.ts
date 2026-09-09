@@ -49,6 +49,14 @@ export async function saveTemplate(data: Partial<WorkoutTemplate>): Promise<any>
   return res.json();
 }
 
+export async function deleteTemplate(templateId: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/templates/${templateId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to delete workout template');
+  return res.json();
+}
+
 export async function fetchPreviousPerformance(exerciseId: string): Promise<{ date?: string; sets: { setNumber: number; weightKg: number; reps: number }[] }> {
   const res = await fetch(`${API_BASE}/sessions/previous/${exerciseId}`);
   if (!res.ok) return { sets: [] };
@@ -86,24 +94,50 @@ function getLocalSessions(): any[] {
   return [];
 }
 
+function getDeletedSessionKeys(): Set<string> {
+  const saved = localStorage.getItem('mjolnir_deleted_sessions');
+  if (saved) {
+    try { return new Set(JSON.parse(saved)); } catch (e) {}
+  }
+  return new Set();
+}
+
+function markSessionAsDeleted(sessionId?: string, startTime?: string) {
+  const deletedKeys = getDeletedSessionKeys();
+  if (sessionId) deletedKeys.add(sessionId);
+  if (startTime) deletedKeys.add(startTime);
+  localStorage.setItem('mjolnir_deleted_sessions', JSON.stringify(Array.from(deletedKeys)));
+
+  // Clean local backup
+  const existing = getLocalSessions();
+  const updated = existing.filter((s: any) => s.id !== sessionId && s.startTime !== startTime);
+  localStorage.setItem('mjolnir_sessions_backup', JSON.stringify(updated));
+}
+
 function saveLocalSession(sessionData: any) {
   const existing = getLocalSessions();
-  const updated = [sessionData, ...existing.filter((s: any) => s.startTime !== sessionData.startTime)];
+  const updated = [sessionData, ...existing.filter((s: any) => s.startTime !== sessionData.startTime && (s.id ? s.id !== sessionData.id : true))];
   localStorage.setItem('mjolnir_sessions_backup', JSON.stringify(updated));
 }
 
 export async function fetchSessions(): Promise<WorkoutSession[]> {
-  const localSessions = getLocalSessions();
+  const deletedKeys = getDeletedSessionKeys();
+  const rawLocalSessions = getLocalSessions();
+  const localSessions = rawLocalSessions.filter((s: any) => !deletedKeys.has(s.id) && !deletedKeys.has(s.startTime));
+
   try {
     const res = await fetch(`${API_BASE}/sessions`);
     if (!res.ok) throw new Error('Failed to fetch workout sessions');
     const apiSessions: WorkoutSession[] = await res.json();
 
-    // Auto-restore local sessions to API if container restarted and wiped DB
-    if (localSessions.length > apiSessions.length) {
+    // Filter out any API sessions that were marked deleted locally
+    const filteredApiSessions = apiSessions.filter((s) => !deletedKeys.has(s.id) && !deletedKeys.has(s.startTime));
+
+    // Auto-restore valid local sessions to API only if container restarted and wiped DB
+    if (localSessions.length > filteredApiSessions.length) {
       for (const localSess of localSessions) {
-        const existsInApi = apiSessions.some((s) => s.startTime === localSess.startTime || s.id === localSess.id);
-        if (!existsInApi) {
+        const existsInApi = filteredApiSessions.some((s) => s.startTime === localSess.startTime || s.id === localSess.id);
+        if (!existsInApi && !deletedKeys.has(localSess.id) && !deletedKeys.has(localSess.startTime)) {
           try {
             await fetch(`${API_BASE}/sessions`, {
               method: 'POST',
@@ -115,42 +149,36 @@ export async function fetchSessions(): Promise<WorkoutSession[]> {
       }
       // Re-fetch after syncing
       const syncedRes = await fetch(`${API_BASE}/sessions`);
-      if (syncedRes.ok) return syncedRes.json();
+      if (syncedRes.ok) {
+        const reFetched: WorkoutSession[] = await syncedRes.json();
+        return reFetched.filter((s) => !deletedKeys.has(s.id) && !deletedKeys.has(s.startTime));
+      }
     }
 
-    return apiSessions.length >= localSessions.length ? apiSessions : (localSessions as any);
+    return filteredApiSessions;
   } catch (err) {
-    // If backend offline, return local backup
+    // If backend offline, return valid local backup
     return localSessions as any;
   }
 }
 
-export async function deleteTemplate(templateId: string): Promise<any> {
-  const res = await fetch(`${API_BASE}/templates/${templateId}`, {
-    method: 'DELETE',
-  });
-  if (!res.ok) throw new Error('Failed to delete workout template');
-  return res.json();
-}
-
 export async function saveSession(sessionData: any): Promise<{ id: string }> {
-  // Always save local backup first for guaranteed zero data loss
-  saveLocalSession(sessionData);
-
   const res = await fetch(`${API_BASE}/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(sessionData),
   });
   if (!res.ok) throw new Error('Failed to save workout session');
-  return res.json();
+  const result = await res.json();
+
+  // Save local backup with actual returned session ID
+  saveLocalSession({ ...sessionData, id: result.id });
+  return result;
 }
 
-export async function deleteSession(sessionId: string): Promise<any> {
-  // Remove from localStorage backup
-  const existing = getLocalSessions();
-  const updated = existing.filter((s: any) => s.id !== sessionId);
-  localStorage.setItem('mjolnir_sessions_backup', JSON.stringify(updated));
+export async function deleteSession(sessionId: string, startTime?: string): Promise<any> {
+  // Mark deleted locally first so auto-sync never re-posts it
+  markSessionAsDeleted(sessionId, startTime);
 
   const res = await fetch(`${API_BASE}/sessions/${sessionId}`, {
     method: 'DELETE',
