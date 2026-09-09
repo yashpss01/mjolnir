@@ -6,12 +6,23 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dataDir = path.resolve(__dirname, '../../data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+// Respect process.env.DB_PATH (e.g. for Render persistent volume /var/data/mjolnir.db)
+let dbPath = process.env.DB_PATH;
+
+if (!dbPath) {
+  const dataDir = path.resolve(process.cwd(), 'server/data');
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  dbPath = path.join(dataDir, 'mjolnir.db');
+} else {
+  const customDir = path.dirname(dbPath);
+  if (!fs.existsSync(customDir)) {
+    fs.mkdirSync(customDir, { recursive: true });
+  }
 }
 
-const dbPath = path.join(dataDir, 'mjolnir.db');
+console.log(`📂 Using SQLite Database at: ${dbPath}`);
 export const db = new Database(dbPath);
 
 // Enable WAL mode & foreign keys for performance and data safety
