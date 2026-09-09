@@ -6,20 +6,7 @@ export async function seedSupabaseDatabase() {
     return;
   }
 
-  console.log('Checking Supabase exercises table...');
-  const { data: existing, error: countErr } = await supabase.from('exercises').select('id', { count: 'exact' });
-
-  if (countErr) {
-    console.error('Error connecting to Supabase exercises table:', countErr.message);
-    return;
-  }
-
-  if (existing && existing.length > 0) {
-    console.log('Supabase database already seeded.');
-    return;
-  }
-
-  console.log('Seeding Supabase database with exercises & weekly workout templates...');
+  console.log('Seeding / checking Supabase exercises and 5 weekly workout templates...');
 
   const exercisesData = [
     // Chest
@@ -71,7 +58,6 @@ export async function seedSupabaseDatabase() {
   const { error: exErr } = await supabase.from('exercises').upsert(exercisesData);
   if (exErr) {
     console.error('Error seeding Supabase exercises:', exErr.message);
-    return;
   }
 
   const templates = [
@@ -110,7 +96,7 @@ export async function seedSupabaseDatabase() {
   await supabase.from('workout_templates').upsert(templates);
 
   const tplExercises = [
-    // Monday
+    // Monday — Upper Strength
     { id: 'tplex-tpl-monday-upper-0', template_id: 'tpl-monday-upper', exercise_id: 'ex-bench-press', order_index: 1, target_sets: 4, target_rep_min: 5, target_rep_max: 8, rest_seconds: 120 },
     { id: 'tplex-tpl-monday-upper-1', template_id: 'tpl-monday-upper', exercise_id: 'ex-lat-pulldown', order_index: 2, target_sets: 4, target_rep_min: 6, target_rep_max: 10, rest_seconds: 120 },
     { id: 'tplex-tpl-monday-upper-2', template_id: 'tpl-monday-upper', exercise_id: 'ex-chest-supported-row', order_index: 3, target_sets: 3, target_rep_min: 6, target_rep_max: 10, rest_seconds: 90 },
@@ -119,16 +105,46 @@ export async function seedSupabaseDatabase() {
     { id: 'tplex-tpl-monday-upper-5', template_id: 'tpl-monday-upper', exercise_id: 'ex-ez-bar-curl', order_index: 6, target_sets: 3, target_rep_min: 8, target_rep_max: 12, rest_seconds: 60 },
     { id: 'tplex-tpl-monday-upper-6', template_id: 'tpl-monday-upper', exercise_id: 'ex-rope-triceps-pushdown', order_index: 7, target_sets: 3, target_rep_min: 8, target_rep_max: 12, rest_seconds: 60 },
 
-    // Tuesday
+    // Tuesday — Lower Strength
     { id: 'tplex-tpl-tuesday-lower-0', template_id: 'tpl-tuesday-lower', exercise_id: 'ex-squat', order_index: 1, target_sets: 4, target_rep_min: 5, target_rep_max: 8, rest_seconds: 180 },
     { id: 'tplex-tpl-tuesday-lower-1', template_id: 'tpl-tuesday-lower', exercise_id: 'ex-rdl', order_index: 2, target_sets: 3, target_rep_min: 6, target_rep_max: 10, rest_seconds: 120 },
     { id: 'tplex-tpl-tuesday-lower-2', template_id: 'tpl-tuesday-lower', exercise_id: 'ex-bulgarian-split-squat', order_index: 3, target_sets: 3, target_rep_min: 8, target_rep_max: 10, rest_seconds: 90 },
     { id: 'tplex-tpl-tuesday-lower-3', template_id: 'tpl-tuesday-lower', exercise_id: 'ex-leg-curl', order_index: 4, target_sets: 3, target_rep_min: 8, target_rep_max: 12, rest_seconds: 90 },
     { id: 'tplex-tpl-tuesday-lower-4', template_id: 'tpl-tuesday-lower', exercise_id: 'ex-calf-raise', order_index: 5, target_sets: 4, target_rep_min: 10, target_rep_max: 15, rest_seconds: 60 },
     { id: 'tplex-tpl-tuesday-lower-5', template_id: 'tpl-tuesday-lower', exercise_id: 'ex-hanging-knee-raise', order_index: 6, target_sets: 3, target_rep_min: 10, target_rep_max: 15, rest_seconds: 60 },
+
+    // Wednesday — Pull + Shoulders
+    { id: 'tplex-tpl-wednesday-pull-0', template_id: 'tpl-wednesday-pull', exercise_id: 'ex-lat-pulldown', order_index: 1, target_sets: 4, target_rep_min: 8, target_rep_max: 10, rest_seconds: 120 },
+    { id: 'tplex-tpl-wednesday-pull-1', template_id: 'tpl-wednesday-pull', exercise_id: 'ex-seated-cable-row', order_index: 2, target_sets: 3, target_rep_min: 8, target_rep_max: 12, rest_seconds: 90 },
+    { id: 'tplex-tpl-wednesday-pull-2', template_id: 'tpl-wednesday-pull', exercise_id: 'ex-chest-supported-row', order_index: 3, target_sets: 3, target_rep_min: 10, target_rep_max: 12, rest_seconds: 90 },
+    { id: 'tplex-tpl-wednesday-pull-3', template_id: 'tpl-wednesday-pull', exercise_id: 'ex-lateral-raise', order_index: 4, target_sets: 4, target_rep_min: 12, target_rep_max: 15, rest_seconds: 60 },
+    { id: 'tplex-tpl-wednesday-pull-4', template_id: 'tpl-wednesday-pull', exercise_id: 'ex-rear-delt-fly', order_index: 5, target_sets: 3, target_rep_min: 12, target_rep_max: 15, rest_seconds: 60 },
+    { id: 'tplex-tpl-wednesday-pull-5', template_id: 'tpl-wednesday-pull', exercise_id: 'ex-hammer-curl', order_index: 6, target_sets: 3, target_rep_min: 10, target_rep_max: 12, rest_seconds: 60 },
+    { id: 'tplex-tpl-wednesday-pull-6', template_id: 'tpl-wednesday-pull', exercise_id: 'ex-face-pull', order_index: 7, target_sets: 3, target_rep_min: 12, target_rep_max: 15, rest_seconds: 60 },
+
+    // Thursday — Lower Hypertrophy
+    { id: 'tplex-tpl-thursday-lower-0', template_id: 'tpl-thursday-lower', exercise_id: 'ex-squat', order_index: 1, target_sets: 3, target_rep_min: 8, target_rep_max: 12, rest_seconds: 120 },
+    { id: 'tplex-tpl-thursday-lower-1', template_id: 'tpl-thursday-lower', exercise_id: 'ex-rdl', order_index: 2, target_sets: 3, target_rep_min: 8, target_rep_max: 12, rest_seconds: 120 },
+    { id: 'tplex-tpl-thursday-lower-2', template_id: 'tpl-thursday-lower', exercise_id: 'ex-walking-lunges', order_index: 3, target_sets: 3, target_rep_min: 10, target_rep_max: 12, rest_seconds: 90 },
+    { id: 'tplex-tpl-thursday-lower-3', template_id: 'tpl-thursday-lower', exercise_id: 'ex-leg-extension', order_index: 4, target_sets: 3, target_rep_min: 12, target_rep_max: 15, rest_seconds: 60 },
+    { id: 'tplex-tpl-thursday-lower-4', template_id: 'tpl-thursday-lower', exercise_id: 'ex-leg-curl', order_index: 5, target_sets: 3, target_rep_min: 12, target_rep_max: 15, rest_seconds: 60 },
+    { id: 'tplex-tpl-thursday-lower-5', template_id: 'tpl-thursday-lower', exercise_id: 'ex-seated-calf-raise', order_index: 6, target_sets: 4, target_rep_min: 12, target_rep_max: 20, rest_seconds: 60 },
+    { id: 'tplex-tpl-thursday-lower-6', template_id: 'tpl-thursday-lower', exercise_id: 'ex-cable-crunch', order_index: 7, target_sets: 3, target_rep_min: 12, target_rep_max: 15, rest_seconds: 60 },
+
+    // Friday — Push + Arms
+    { id: 'tplex-tpl-friday-push-0', template_id: 'tpl-friday-push', exercise_id: 'ex-incline-bench', order_index: 1, target_sets: 4, target_rep_min: 6, target_rep_max: 10, rest_seconds: 120 },
+    { id: 'tplex-tpl-friday-push-1', template_id: 'tpl-friday-push', exercise_id: 'ex-machine-chest-press', order_index: 2, target_sets: 3, target_rep_min: 8, target_rep_max: 12, rest_seconds: 90 },
+    { id: 'tplex-tpl-friday-push-2', template_id: 'tpl-friday-push', exercise_id: 'ex-cable-fly', order_index: 3, target_sets: 3, target_rep_min: 12, target_rep_max: 15, rest_seconds: 60 },
+    { id: 'tplex-tpl-friday-push-3', template_id: 'tpl-friday-push', exercise_id: 'ex-lateral-raise', order_index: 4, target_sets: 4, target_rep_min: 12, target_rep_max: 15, rest_seconds: 60 },
+    { id: 'tplex-tpl-friday-push-4', template_id: 'tpl-friday-push', exercise_id: 'ex-triceps-pushdown', order_index: 5, target_sets: 3, target_rep_min: 10, target_rep_max: 15, rest_seconds: 60 },
+    { id: 'tplex-tpl-friday-push-5', template_id: 'tpl-friday-push', exercise_id: 'ex-overhead-cable-triceps-extension', order_index: 6, target_sets: 2, target_rep_min: 10, target_rep_max: 15, rest_seconds: 60 },
+    { id: 'tplex-tpl-friday-push-6', template_id: 'tpl-friday-push', exercise_id: 'ex-db-curl', order_index: 7, target_sets: 3, target_rep_min: 10, target_rep_max: 12, rest_seconds: 60 },
   ];
 
-  await supabase.from('workout_template_exercises').upsert(tplExercises);
+  const { error: tplexErr } = await supabase.from('workout_template_exercises').upsert(tplExercises);
+  if (tplexErr) {
+    console.error('Error seeding Supabase template exercises:', tplexErr.message);
+  }
 
-  console.log('Supabase database seeded successfully!');
+  console.log('Supabase database seeded with all 5 routines & exercises successfully!');
 }
