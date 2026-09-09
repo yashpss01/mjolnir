@@ -12,7 +12,10 @@ router.get('/', async (req, res) => {
       const { data: templates, error: tplErr } = await sb.from('workout_templates').select('*');
       if (tplErr) throw tplErr;
 
-      const result = await Promise.all((templates || []).map(async (tpl) => {
+      const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Flexible'];
+      const sortedTemplates = (templates || []).sort((a, b) => dayOrder.indexOf(a.target_day) - dayOrder.indexOf(b.target_day));
+
+      const result = await Promise.all(sortedTemplates.map(async (tpl) => {
         const { data: tplExercises } = await sb
           .from('workout_template_exercises')
           .select('*, exercises(name, muscle_group, equipment)')

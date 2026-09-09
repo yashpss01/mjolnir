@@ -94,8 +94,40 @@ ALTER TABLE exercise_sets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE personal_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bodyweight_entries ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if re-running
+DROP POLICY IF EXISTS "Allow public read exercises" ON exercises;
+DROP POLICY IF EXISTS "Allow public insert exercises" ON exercises;
+DROP POLICY IF EXISTS "Allow public update exercises" ON exercises;
+
+DROP POLICY IF EXISTS "Allow public read workout_templates" ON workout_templates;
+DROP POLICY IF EXISTS "Allow public insert workout_templates" ON workout_templates;
+DROP POLICY IF EXISTS "Allow public update workout_templates" ON workout_templates;
+
+DROP POLICY IF EXISTS "Allow public read workout_template_exercises" ON workout_template_exercises;
+DROP POLICY IF EXISTS "Allow public insert workout_template_exercises" ON workout_template_exercises;
+DROP POLICY IF EXISTS "Allow public update workout_template_exercises" ON workout_template_exercises;
+DROP POLICY IF EXISTS "Allow public delete workout_template_exercises" ON workout_template_exercises;
+
+DROP POLICY IF EXISTS "Allow public read workout_sessions" ON workout_sessions;
+DROP POLICY IF EXISTS "Allow public insert workout_sessions" ON workout_sessions;
+
+DROP POLICY IF EXISTS "Allow public read workout_session_exercises" ON workout_session_exercises;
+DROP POLICY IF EXISTS "Allow public insert workout_session_exercises" ON workout_session_exercises;
+
+DROP POLICY IF EXISTS "Allow public read exercise_sets" ON exercise_sets;
+DROP POLICY IF EXISTS "Allow public insert exercise_sets" ON exercise_sets;
+
+DROP POLICY IF EXISTS "Allow public read personal_records" ON personal_records;
+DROP POLICY IF EXISTS "Allow public insert personal_records" ON personal_records;
+DROP POLICY IF EXISTS "Allow public update personal_records" ON personal_records;
+
+DROP POLICY IF EXISTS "Allow public read bodyweight_entries" ON bodyweight_entries;
+DROP POLICY IF EXISTS "Allow public insert bodyweight_entries" ON bodyweight_entries;
+
+-- Create ALL RLS Policies (SELECT, INSERT, UPDATE)
 CREATE POLICY "Allow public read exercises" ON exercises FOR SELECT USING (true);
 CREATE POLICY "Allow public insert exercises" ON exercises FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update exercises" ON exercises FOR UPDATE USING (true);
 
 CREATE POLICY "Allow public read workout_templates" ON workout_templates FOR SELECT USING (true);
 CREATE POLICY "Allow public insert workout_templates" ON workout_templates FOR INSERT WITH CHECK (true);
@@ -103,6 +135,7 @@ CREATE POLICY "Allow public update workout_templates" ON workout_templates FOR U
 
 CREATE POLICY "Allow public read workout_template_exercises" ON workout_template_exercises FOR SELECT USING (true);
 CREATE POLICY "Allow public insert workout_template_exercises" ON workout_template_exercises FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update workout_template_exercises" ON workout_template_exercises FOR UPDATE USING (true);
 CREATE POLICY "Allow public delete workout_template_exercises" ON workout_template_exercises FOR DELETE USING (true);
 
 CREATE POLICY "Allow public read workout_sessions" ON workout_sessions FOR SELECT USING (true);

@@ -148,3 +148,5 @@ export async function seedSupabaseDatabase() {
 
   console.log('Supabase database seeded with all 5 routines & exercises successfully!');
 }
+
+seedSupabaseDatabase().catch(console.error);
