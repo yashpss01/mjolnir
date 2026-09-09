@@ -11,25 +11,27 @@ router.get('/', async (req, res) => {
       const sb = supabase;
       const { data: sessions, error: sessErr } = await sb
         .from('workout_sessions')
-        .select('*')
+        .select(`
+          *,
+          workout_session_exercises (
+            id,
+            session_id,
+            exercise_id,
+            order_index,
+            notes,
+            exercises ( id, name, muscle_group, equipment ),
+            exercise_sets ( id, session_exercise_id, set_number, weight_kg, reps, is_completed, rpe, rest_seconds_taken )
+          )
+        `)
         .order('start_time', { ascending: false });
 
       if (sessErr) throw sessErr;
 
-      const result = await Promise.all((sessions || []).map(async (sess) => {
-        const { data: sessionExercises } = await sb
-          .from('workout_session_exercises')
-          .select('*, exercises(name, muscle_group, equipment)')
-          .eq('session_id', sess.id)
-          .order('order_index', { ascending: true });
+      const result = (sessions || []).map((sess: any) => {
+        const sortedExercises = (sess.workout_session_exercises || []).sort((a: any, b: any) => a.order_index - b.order_index);
 
-        const exercisesWithSets = await Promise.all((sessionExercises || []).map(async (se: any) => {
-          const { data: sets } = await sb
-            .from('exercise_sets')
-            .select('*')
-            .eq('session_exercise_id', se.id)
-            .order('set_number', { ascending: true });
-
+        const exercisesWithSets = sortedExercises.map((se: any) => {
+          const sortedSets = (se.exercise_sets || []).sort((a: any, b: any) => a.set_number - b.set_number);
           return {
             id: se.id,
             sessionId: se.session_id,
@@ -42,7 +44,7 @@ router.get('/', async (req, res) => {
               muscleGroup: se.exercises?.muscle_group || 'Chest',
               equipment: se.exercises?.equipment || 'Barbell',
             },
-            sets: (sets || []).map((s: any) => ({
+            sets: sortedSets.map((s: any) => ({
               id: s.id,
               sessionExerciseId: s.session_exercise_id,
               setNumber: s.set_number,
@@ -53,7 +55,7 @@ router.get('/', async (req, res) => {
               restSecondsTaken: s.rest_seconds_taken,
             })),
           };
-        }));
+        });
 
         return {
           id: sess.id,
@@ -69,7 +71,7 @@ router.get('/', async (req, res) => {
           notes: sess.notes,
           exercises: exercisesWithSets,
         };
-      }));
+      });
 
       return res.json(result);
     }

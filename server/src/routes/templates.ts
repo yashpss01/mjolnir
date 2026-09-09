@@ -9,25 +9,36 @@ router.get('/', async (req, res) => {
   try {
     if (isSupabaseConfigured && supabase) {
       const sb = supabase;
-      const { data: templates, error: tplErr } = await sb.from('workout_templates').select('*');
+      const { data: templates, error: tplErr } = await sb
+        .from('workout_templates')
+        .select(`
+          *,
+          workout_template_exercises (
+            id,
+            template_id,
+            exercise_id,
+            order_index,
+            target_sets,
+            target_rep_min,
+            target_rep_max,
+            rest_seconds,
+            notes,
+            exercises ( id, name, muscle_group, equipment )
+          )
+        `);
       if (tplErr) throw tplErr;
 
       const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Flexible'];
       const sortedTemplates = (templates || []).sort((a, b) => dayOrder.indexOf(a.target_day) - dayOrder.indexOf(b.target_day));
 
-      const result = await Promise.all(sortedTemplates.map(async (tpl) => {
-        const { data: tplExercises } = await sb
-          .from('workout_template_exercises')
-          .select('*, exercises(name, muscle_group, equipment)')
-          .eq('template_id', tpl.id)
-          .order('order_index', { ascending: true });
-
+      const result = sortedTemplates.map((tpl: any) => {
+        const sortedExercises = (tpl.workout_template_exercises || []).sort((a: any, b: any) => a.order_index - b.order_index);
         return {
           id: tpl.id,
           name: tpl.name,
           targetDay: tpl.target_day,
           notes: tpl.notes,
-          exercises: (tplExercises || []).map((item: any) => ({
+          exercises: sortedExercises.map((item: any) => ({
             id: item.id,
             templateId: item.template_id,
             exerciseId: item.exercise_id,
@@ -45,7 +56,7 @@ router.get('/', async (req, res) => {
             },
           })),
         };
-      }));
+      });
 
       return res.json(result);
     }

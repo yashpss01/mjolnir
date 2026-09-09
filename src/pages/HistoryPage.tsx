@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Clock, Dumbbell, Trophy, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, Trophy, ChevronDown, ChevronUp, Trash2, Loader2 } from 'lucide-react';
 import { WorkoutSession } from '../types';
 import { fetchSessions, deleteSession } from '../services/api';
 
@@ -7,6 +7,7 @@ export const HistoryPage: React.FC = () => {
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadData = () => {
     setLoading(true);
@@ -24,12 +25,15 @@ export const HistoryPage: React.FC = () => {
     e.stopPropagation();
     if (!window.confirm(`Are you sure you want to delete "${name}" from your history?`)) return;
 
+    setDeletingId(sessionId);
     try {
       await deleteSession(sessionId, startTime);
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
     } catch (err) {
       console.error(err);
       alert('Failed to delete workout log.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -65,6 +69,7 @@ export const HistoryPage: React.FC = () => {
         <div className="space-y-3">
           {sessions.map((item) => {
             const isExpanded = expandedSessionId === item.id;
+            const isDeleting = deletingId === item.id;
 
             return (
               <div
@@ -86,10 +91,11 @@ export const HistoryPage: React.FC = () => {
                     )}
                     <button
                       onClick={(e) => handleDeleteSession(e, item.id, item.startTime, item.name)}
+                      disabled={isDeleting}
                       title="Delete workout log"
-                      className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
+                      className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50 rounded-lg transition"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      {isDeleting ? <Loader2 className="w-4 h-4 animate-spin text-red-400" /> : <Trash2 className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>

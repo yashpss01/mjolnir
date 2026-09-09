@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Plus, Trash2, Dumbbell, Save } from 'lucide-react';
+import { X, Plus, Trash2, Dumbbell, Save, Loader2 } from 'lucide-react';
 import { WorkoutTemplate, Exercise } from '../../types';
 import { fetchExercises, saveTemplate, deleteTemplate } from '../../services/api';
 
@@ -41,6 +41,7 @@ export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
   const [showPicker, setShowPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchExercises().then(setAvailableExercises).catch(console.error);
@@ -234,28 +235,50 @@ export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
             {template?.id && (
               <button
                 type="button"
+                disabled={saving || deleting}
                 onClick={async () => {
                   if (!window.confirm(`Are you sure you want to delete routine "${name}"?`)) return;
+                  setDeleting(true);
                   try {
                     await deleteTemplate(template.id);
                     onSaved();
                   } catch (err) {
                     alert('Failed to delete workout template');
+                  } finally {
+                    setDeleting(false);
                   }
                 }}
-                className="py-3 px-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 font-bold text-sm rounded-xl flex items-center justify-center gap-1.5 transition"
+                className="py-3 px-4 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-50 border border-red-500/30 text-red-400 font-bold text-sm rounded-xl flex items-center justify-center gap-1.5 transition"
               >
-                <Trash2 className="w-4 h-4" />
-                Delete
+                {deleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </>
+                )}
               </button>
             )}
             <button
               type="submit"
-              disabled={saving}
-              className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition"
+              disabled={saving || deleting}
+              className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:opacity-75 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition"
             >
-              <Save className="w-4 h-4" />
-              {saving ? 'Saving...' : 'Save Template'}
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Template
+                </>
+              )}
             </button>
           </div>
         </form>

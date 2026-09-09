@@ -218,6 +218,9 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
 
   // Finish Workout Action
   const handleFinishWorkoutClick = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    
     let totalSetsLogged = 0;
     let totalVolume = 0;
     let prCount = 0;
@@ -272,6 +275,8 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
       setShowSummary(true);
     } catch (err) {
       alert('Failed to save workout session');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -306,9 +311,17 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
             </button>
             <button
               onClick={handleFinishWorkoutClick}
-              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-md transition"
+              disabled={isSubmitting}
+              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 disabled:opacity-75 active:scale-95 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5"
             >
-              Finish
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Finish'
+              )}
             </button>
           </div>
         </div>
