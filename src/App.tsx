@@ -10,42 +10,56 @@ import { ActiveWorkoutScreen } from './components/workout/ActiveWorkoutScreen';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<TabType>(() => {
-    const saved = localStorage.getItem('mjolnir_active_tab');
-    if (saved && ['workout', 'history', 'exercises', 'progress', 'settings'].includes(saved)) {
-      return saved as TabType;
-    }
+    try {
+      const saved = localStorage.getItem('mjolnir_active_tab');
+      if (saved && ['workout', 'history', 'exercises', 'progress', 'settings'].includes(saved)) {
+        return saved as TabType;
+      }
+    } catch (e) {}
     return 'workout';
   });
 
   const [activeWorkoutTemplate, setActiveWorkoutTemplate] = useState<WorkoutTemplate | null>(() => {
-    const saved = localStorage.getItem('mjolnir_active_workout');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (err) {}
-    }
+    try {
+      const saved = localStorage.getItem('mjolnir_active_workout');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.id && parsed.name && Array.isArray(parsed.exercises)) {
+          return parsed;
+        }
+      }
+    } catch (err) {}
     return null;
   });
 
   const handleSelectTab = (tab: TabType) => {
     setActiveTab(tab);
-    localStorage.setItem('mjolnir_active_tab', tab);
+    try {
+      localStorage.setItem('mjolnir_active_tab', tab);
+    } catch (e) {}
   };
 
   const handleStartWorkout = (template: WorkoutTemplate) => {
+    if (!template || !Array.isArray(template.exercises)) return;
     setActiveWorkoutTemplate(template);
-    localStorage.setItem('mjolnir_active_workout', JSON.stringify(template));
+    try {
+      localStorage.setItem('mjolnir_active_workout', JSON.stringify(template));
+    } catch (e) {}
   };
 
   const handleFinishWorkout = () => {
     setActiveWorkoutTemplate(null);
-    localStorage.removeItem('mjolnir_active_workout');
+    try {
+      localStorage.removeItem('mjolnir_active_workout');
+    } catch (e) {}
     handleSelectTab('history');
   };
 
   const handleDiscardWorkout = () => {
     setActiveWorkoutTemplate(null);
-    localStorage.removeItem('mjolnir_active_workout');
+    try {
+      localStorage.removeItem('mjolnir_active_workout');
+    } catch (e) {}
   };
 
   return (
