@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Plus, Trash2, Clock, Dumbbell, X, Trophy, MessageSquare, AlertCircle, TrendingUp } from 'lucide-react';
+import { Check, Plus, Trash2, Clock, Dumbbell, X, Trophy, MessageSquare, AlertCircle, TrendingUp, Loader2 } from 'lucide-react';
 import { calculateProgression } from '../../utils/progression';
 import { WorkoutTemplate, Exercise, ExerciseSet } from '../../types';
 import { fetchPreviousPerformance, fetchExercises, saveSession } from '../../services/api';
@@ -36,6 +36,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
   const [durationSeconds, setDurationSeconds] = useState<number>(0);
   const [exercises, setExercises] = useState<ActiveWorkoutExercise[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Rest Timer State
   const [restTimerSeconds, setRestTimerSeconds] = useState<number>(0);
@@ -66,12 +67,18 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
       setLoading(true);
       const activeExList: ActiveWorkoutExercise[] = [];
 
-      for (const tplEx of template.exercises) {
-        if (!tplEx.exercise) continue;
+      for (const tplEx of template.exercises || []) {
+        const exObj: Exercise = tplEx.exercise || {
+          id: tplEx.exerciseId || `ex-${Date.now()}-${Math.random()}`,
+          name: 'Exercise',
+          muscleGroup: 'Strength',
+          equipment: 'Barbell',
+          isCustom: false,
+        };
 
         let prevSets: { weightKg: number; reps: number }[] = [];
         try {
-          const prevData = await fetchPreviousPerformance(tplEx.exerciseId);
+          const prevData = await fetchPreviousPerformance(exObj.id);
           prevSets = prevData.sets || [];
         } catch (err) {
           console.error('Failed to load previous performance', err);
@@ -82,7 +89,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
           const prevSet = prevSets[i];
           const prevStr = prevSet ? `${prevSet.weightKg} × ${prevSet.reps}` : '—';
           return {
-            id: `set-${tplEx.exerciseId}-${i}-${Date.now()}`,
+            id: `set-${exObj.id}-${i}-${Date.now()}`,
             setNumber: i + 1,
             weightKg: prevSet ? prevSet.weightKg : 0,
             reps: tplEx.targetRepMax || 10,
@@ -92,7 +99,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
         });
 
         activeExList.push({
-          exercise: tplEx.exercise,
+          exercise: exObj,
           restSeconds: tplEx.restSeconds || 90,
           notes: '',
           previousSets: prevSets,
@@ -433,7 +440,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
                           value={set.weightKg === 0 ? '' : set.weightKg}
                           onChange={(e) => handleSetChange(exIdx, setIdx, 'weightKg', parseFloat(e.target.value) || 0)}
                           placeholder="0"
-                          className="w-full py-1.5 px-1 bg-zinc-900 border border-zinc-700/80 rounded-lg font-mono text-sm text-center text-white focus:outline-none focus:border-blue-500"
+                          className="w-full py-1 px-1 bg-zinc-900 border border-zinc-700/80 rounded-lg font-mono text-base text-center text-white focus:outline-none focus:border-blue-500"
                         />
                       </div>
 
@@ -444,7 +451,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
                           value={set.reps === 0 ? '' : set.reps}
                           onChange={(e) => handleSetChange(exIdx, setIdx, 'reps', parseInt(e.target.value, 10) || 0)}
                           placeholder="0"
-                          className="w-full py-1.5 px-1 bg-zinc-900 border border-zinc-700/80 rounded-lg font-mono text-sm text-center text-white focus:outline-none focus:border-blue-500"
+                          className="w-full py-1 px-1 bg-zinc-900 border border-zinc-700/80 rounded-lg font-mono text-base text-center text-white focus:outline-none focus:border-blue-500"
                         />
                       </div>
 
