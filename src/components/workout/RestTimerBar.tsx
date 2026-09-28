@@ -36,7 +36,7 @@ export const RestTimerBar: React.FC<RestTimerBarProps> = ({
 
   return (
     <div className="fixed bottom-20 left-0 right-0 z-40 px-3 mb-safe">
-      <div className="w-full max-w-2xl mx-auto bg-zinc-900/95 border border-zinc-700/90 shadow-2xl rounded-2xl p-3 flex items-center justify-between text-zinc-100 backdrop-blur-xl">
+      <div className="w-full md:max-w-3xl md:mx-auto bg-zinc-900/95 border border-zinc-700/90 shadow-2xl rounded-2xl p-3 flex items-center justify-between text-zinc-100 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase font-bold tracking-wider text-blue-400">Rest Timer</span>
