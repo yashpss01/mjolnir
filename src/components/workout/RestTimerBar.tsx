@@ -36,7 +36,7 @@ export const RestTimerBar: React.FC<RestTimerBarProps> = ({
 
   return (
     <div className="fixed bottom-20 left-0 right-0 z-40 px-3 mb-safe">
-      <div className="max-w-md mx-auto bg-zinc-900/95 border border-zinc-700/90 shadow-2xl rounded-2xl p-3 flex items-center justify-between text-zinc-100 backdrop-blur-xl">
+      <div className="w-full max-w-2xl mx-auto bg-zinc-900/95 border border-zinc-700/90 shadow-2xl rounded-2xl p-3 flex items-center justify-between text-zinc-100 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase font-bold tracking-wider text-blue-400">Rest Timer</span>
@@ -45,7 +45,7 @@ export const RestTimerBar: React.FC<RestTimerBarProps> = ({
             </span>
           </div>
           {exerciseName && (
-            <span className="text-xs text-zinc-400 truncate max-w-[90px] hidden xs:inline">
+            <span className="text-xs text-zinc-400 truncate max-w-[120px] hidden xs:inline">
               {exerciseName}
             </span>
           )}
@@ -54,7 +54,7 @@ export const RestTimerBar: React.FC<RestTimerBarProps> = ({
         <div className="flex items-center gap-1.5">
           <button
             onClick={onAdd30Seconds}
-            className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-xs font-semibold rounded-lg text-zinc-200 flex items-center gap-0.5 border border-zinc-700/50 transition"
+            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-xs font-semibold rounded-lg text-zinc-200 flex items-center gap-0.5 border border-zinc-700/50 transition"
           >
             <Plus className="w-3.5 h-3.5" />
             30s

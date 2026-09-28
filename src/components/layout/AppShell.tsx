@@ -21,16 +21,16 @@ export const AppShell: React.FC<AppShellProps> = ({
   children,
 }) => {
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-blue-600">
+    <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-blue-600">
       {/* Top Mobile Header */}
-      <header className="sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-3 sm:px-4 py-3">
-        <div className="max-w-xl sm:max-w-2xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 py-3.5">
+        <div className="w-full max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-              <Dumbbell className="w-4 h-4 text-blue-400" />
+            <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-inner">
+              <Dumbbell className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h1 className="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5">
+              <h1 className="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5">
                 Mjolnir <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">Gym</span>
               </h1>
             </div>
@@ -40,18 +40,18 @@ export const AppShell: React.FC<AppShellProps> = ({
           {isWorkoutActive && (
             <button
               onClick={onReturnToWorkout}
-              className="flex items-center gap-2 bg-blue-600/10 border border-blue-500/30 text-blue-400 px-3 py-1 rounded-full text-xs font-semibold hover:bg-blue-600/20 active:scale-95 transition"
+              className="flex items-center gap-2 bg-blue-600/10 border border-blue-500/30 text-blue-400 px-3.5 py-1.5 rounded-full text-xs font-semibold hover:bg-blue-600/20 active:scale-95 transition shadow-sm"
             >
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
-              <span className="truncate max-w-[110px] font-medium">{activeWorkoutName || 'In Progress'}</span>
-              <Play className="w-3 h-3 fill-current ml-0.5" />
+              <span className="truncate max-w-[130px] font-medium">{activeWorkoutName || 'In Progress'}</span>
+              <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
             </button>
           )}
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-xl sm:max-w-2xl mx-auto pb-28 px-3 sm:px-4 pt-4 overflow-y-auto">
+      <main className="flex-1 w-full max-w-2xl mx-auto pb-28 px-4 sm:px-6 pt-4 overflow-y-auto">
         {children}
       </main>
 
